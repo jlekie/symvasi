@@ -52,7 +52,7 @@ async function parseBuildsAsync(builds, targetsPath, templatesPath) {
             let compiledOutput = await FS.readFileAsync(outputFilePath, 'utf8').then(content => handlebars.compile(content));
             
             let outputPath = Path.relative(outputsPath, outputFilePath);
-            outputPath = outputPath.slice(0, -4);
+            outputPath = outputPath.slice(0, 0 - Path.basename(outputFilePath).length);
             
             return {
                 path: outputPath,
@@ -117,7 +117,7 @@ export default class Generator {
                     await Bluebird.map(definitions, async (definition) => {
                         let generatedFile = targetOutput.compiledTemplate(definition);
                         
-                        await FS.outputFileAsync(Path.resolve(output, `${targetOutput.path}.${target.params.extension}`), generatedFile);
+                        await FS.outputFileAsync(Path.resolve(output, targetOutput.path, `${definition.name}.${target.params.extension}`), generatedFile);
                     });
                 });
             });
