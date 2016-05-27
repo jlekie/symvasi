@@ -1,0 +1,61 @@
+{
+    "name": "symvasi",
+    "description": "Symvasi code generator",
+    "version": "0.0.2",
+    
+    "author": {
+        "name": "Joe Lekie",
+        "email": "joe.lekie@gmail.com"
+    },
+    
+    "main": "index.js",
+    "bin": { "symvasi": "./bin/run.js" },
+    
+    "engines": {
+        "node": ">=4.x"
+    },
+    
+    "keywords": [ "symvasi", "rpc", "codegen" ],
+    
+    "dependencies": {
+        "lodash": "4.x",
+        "bluebird": "3.x",
+        "fs-extra": "0.x",
+        "js-yaml": "3.x",
+        
+        "source-map-support": "0.x",
+        "babel-runtime": "6.x",
+        
+        "glob": "7.0.3",
+        "commander": "2.x",
+        "handlebars": "4.x"
+    },
+    
+    "devDependencies": {
+        "gulp": "3.x",
+        "through2": "2.x",
+        "babel-core": "6.x",
+        
+        "gulp-watch": "4.x",
+        "gulp-sequence": "0.x",
+        "gulp-plumber": "1.x",
+        "gulp-nodemon": "2.x",
+        "gulp-babel": "6.x",
+        "gulp-sourcemaps": "1.x",
+        "gulp-eslint": "2.x",
+        "gulp-mocha": "2.x",
+        
+        "babel-eslint": "6.x",
+        "babel-preset-es2015": "6.x",
+        "babel-preset-stage-3": "6.x",
+        "babel-preset-stage-2": "6.x",
+        "babel-plugin-transform-runtime": "6.x",
+        "babel-plugin-transform-class-properties": "6.x",
+        "babel-plugin-transform-async-to-module-method": "6.x",
+        
+        "mocha": "2.x",
+        "chai": "3.x",
+        
+        "mute": "2.x"
+    }
+}

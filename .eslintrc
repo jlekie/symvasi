@@ -1,0 +1,20 @@
+{
+    "parser": "babel-eslint",
+    "extends": "eslint:recommended",
+    "ecmaFeatures": {
+        "classes": true
+    },
+    "env": {
+        "es6": 1,
+        "node": 1
+    },
+    "rules": {
+        "quotes": [1, "single"],
+        "radix": 2,
+        
+        "no-console": 0,
+        "comma-dangle": 0,
+        "no-unused-vars": [0, {"vars": "all", "args": "after-used"}],
+        "semi": 1
+    }
+}
