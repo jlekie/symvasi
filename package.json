@@ -8,6 +8,8 @@
         "email": "joe.lekie@gmail.com"
     },
     
+    "repository": "jlekie/symvasi",
+    
     "main": "index.js",
     "bin": { "symvasi": "./bin/run.js" },
     
