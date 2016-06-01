@@ -106,7 +106,7 @@ var targets = {
         }
     },
     
-    'cfg': {
+    'src/cfg': {
         paths: [ './src/cfg/*.yml' ],
         buildTask: function () {
             return gulp.src(this.paths, { base: 'src' })
