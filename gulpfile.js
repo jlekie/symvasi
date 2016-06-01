@@ -24,7 +24,7 @@ var babelOptions = {
 
 var targets = {
     'manifests': {
-        paths: [ 'package.json', 'README.md' ],
+        paths: [ 'package.json', 'README.md', 'LICENSE' ],
         buildTask: function () {
             return gulp.src(this.paths)
                 .pipe(gulp.dest('dist'));

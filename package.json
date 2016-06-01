@@ -8,6 +8,8 @@
         "email": "joe.lekie@gmail.com"
     },
     
+    "license": "MIT",
+    
     "repository": "jlekie/symvasi",
     
     "main": "index.js",
