@@ -1,0 +1,27 @@
+metadata:
+    app: "symvasi"
+    component: "generator"
+
+levels:
+-   name: "error"
+    aliases:
+    -   "alert"
+    -   "fatal"
+-   name: "warning"
+    aliases:
+    -   "warn"
+-   name: "info"
+-   name: "verbose"
+    aliases:
+    -   "trace"
+-   name: "debug"
+
+outputTemplates:
+-   name: "stdout"
+    channel: "console"
+    level: "info"
+    outputTemplate: "<%=message%>"
+
+defaultLogger:
+    outputs:
+    -   templateName: "stdout"

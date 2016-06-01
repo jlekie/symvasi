@@ -2,6 +2,7 @@ import _ from 'lodash';
 import Bluebird from 'bluebird';
 import Yaml from 'js-yaml';
 import Glob from 'glob';
+import Logquacious from 'logquacious';
 
 import FS from 'fs-extra';
 import Path from 'path';
@@ -10,6 +11,8 @@ import Util from 'util';
 import Definition from './definition';
 import Handlebars from './handlebars';
 import HandlebarsContext from './handlebarsContext';
+
+const logger = new Logquacious('symvasi');
 
 Bluebird.promisifyAll(FS);
 const GlobAsync = Bluebird.promisify(Glob);
@@ -103,6 +106,7 @@ export default class Generator {
         
         let { builds } = manifest;
         
+        logger.debug('Parsing builds...');
         priv(this).buildPromise = parseBuildsAsync.call(this, builds, targetsPath, templatesPath);
     }
     
@@ -115,8 +119,11 @@ export default class Generator {
             await Bluebird.map(targets, async (target) => {
                 await Bluebird.map(target.outputs, async (targetOutput) => {
                     await Bluebird.map(definitions, async (definition) => {
-                        let generatedFile = targetOutput.compiledTemplate(definition);
+                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}.${target.params.extension}`);
                         
+                        logger.info(`Generating output for ${outputPath}...`);
+                        
+                        let generatedFile = targetOutput.compiledTemplate(definition);
                         await FS.outputFileAsync(Path.resolve(output, targetOutput.path, `${definition.name}.${target.params.extension}`), generatedFile);
                     });
                 });
