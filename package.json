@@ -28,7 +28,10 @@
         "source-map-support": "0.x",
         "babel-runtime": "6.x",
         
-        "glob": "7.0.3",
+        "logquacious": "1.x",
+        "logquacious-console": "1.x",
+        
+        "glob": "7.x",
         "commander": "2.x",
         "handlebars": "4.x"
     },
