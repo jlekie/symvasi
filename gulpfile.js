@@ -14,7 +14,7 @@ var eslint = require('gulp-eslint');
 var mocha = require('gulp-mocha');
 var flow = require('gulp-flowtype');
 
-var jshintStylish = require('jshint-stylish');
+// var jshintStylish = require('jshint-stylish');
 
 var babelOptions = {
     presets: [ 'es2015', 'stage-2' ],
