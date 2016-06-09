@@ -1,3 +1,7 @@
 #!/bin/bash
 
-docker run -ti --rm --net=host --privileged -v $(pwd):/ws jlekie/devenv-nodejs:5.x $USER `id -u $USER` `id -g $USER`
+if [ $# -eq 0 ]; then
+    docker run -ti --rm --net=host --privileged -v $(pwd):/ws jlekie/devenv-nodejs:5.x $USER `id -u $USER` `id -g $USER`
+else
+    docker run --rm --net=host --privileged -v $(pwd):/ws jlekie/devenv-nodejs:5.x $USER `id -u $USER` `id -g $USER` $@
+fi
