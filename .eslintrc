@@ -4,6 +4,9 @@
     "ecmaFeatures": {
         "classes": true
     },
+    "plugins": [
+        "flowtype"
+    ],
     "env": {
         "es6": 1,
         "node": 1

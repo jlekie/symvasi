@@ -12,10 +12,15 @@ var babel = require('gulp-babel');
 var sourcemaps = require('gulp-sourcemaps');
 var eslint = require('gulp-eslint');
 var mocha = require('gulp-mocha');
+var flow = require('gulp-flowtype');
+
+var jshintStylish = require('jshint-stylish');
 
 var babelOptions = {
     presets: [ 'es2015', 'stage-2' ],
     plugins: [
+        'syntax-flow',
+        'transform-flow-strip-types',
         ['transform-runtime', { polyfill: false }],
         'transform-class-properties',
         [ 'transform-async-to-module-method', { module: 'bluebird', method: 'coroutine' } ]
@@ -135,24 +140,47 @@ targets.eslint = {
             // .pipe(eslint.failAfterError());
     }
 };
+targets.flow = {
+    paths: [ './src/**/*.js' ],
+    restart: false,
+    buildTask: function () {
+        return gulp.src([ './src/**/*.js' ])
+            .pipe(flow({
+                all: false,
+                weak: false,
+                killFlow: false,
+                abort: false,
+                // reporter: {
+                //     reporter: function (results, config, options) {
+                //         var filteredResult = _.filter(results, function (result) {
+                //             return result.file && result.file !== '';
+                //         });
 
-gulp.task('monitor', function () {
+                //         return jshintStylish.reporter(results, config, options);
+                //     }
+                // }
+            }));
+            // .pipe(eslint.failAfterError());
+    }
+};
+
+gulp.task('watch', function () {
     _.each(targets, function (target, key) {
         if (target.paths) {
             watch(target.paths, function () { sequence('rebuild[' + key + ']')() });
         }
     });
     
-    return nodemon({
-        script: 'dist/index.js',
-        // ext: 'yml',
-        watch: [ 'dist/timestamp' ],
-        delay: 2000,
-        // args: passthroughArgs,
-        execMap: {
-            js: 'node_modules/mocha/bin/mocha dist/test'
-        }
-    });
+    // return nodemon({
+    //     script: 'dist/index.js',
+    //     // ext: 'yml',
+    //     watch: [ 'dist/timestamp' ],
+    //     delay: 2000,
+    //     // args: passthroughArgs,
+    //     execMap: {
+    //         js: 'node_modules/mocha/bin/mocha dist/test'
+    //     }
+    // });
 });
 
 gulp.task('build', function (cb) {

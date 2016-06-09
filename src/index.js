@@ -1,3 +1,5 @@
+// @flow
+
 require('source-map-support').install();
 
 import Generator from './lib/generator';

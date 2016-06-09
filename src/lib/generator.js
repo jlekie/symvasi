@@ -1,3 +1,7 @@
+// @flow
+
+type Privs = { buildPromise?: Promise<Object[]> }
+
 import _ from 'lodash';
 import Bluebird from 'bluebird';
 import Yaml from 'js-yaml';
@@ -19,9 +23,9 @@ const GlobAsync = Bluebird.promisify(Glob);
 
 // Declare the private dataset.
 const privData = new WeakMap();
-function priv(ctx) { return privData.get(ctx); }
+function priv(ctx): Privs { return privData.get(ctx); }
 
-async function parseBuildsAsync(builds, targetsPath, templatesPath) {
+async function parseBuildsAsync(builds: Object[], targetsPath: string, templatesPath: string): Promise<Object[]> {
     let targets = _(builds)
         .map(b => b.targets)
         .flatten()
@@ -101,7 +105,7 @@ async function parseBuildsAsync(builds, targetsPath, templatesPath) {
 }
 
 export default class Generator {
-    constructor(manifest, targetsPath, templatesPath) {
+    constructor(manifest: Object, targetsPath: string, templatesPath: string) {
         privData.set(this, {});
         
         let { builds } = manifest;
@@ -110,10 +114,10 @@ export default class Generator {
         priv(this).buildPromise = parseBuildsAsync.call(this, builds, targetsPath, templatesPath);
     }
     
-    async generateAsync() {
-        let builds = await priv(this).buildPromise;
+    async generateAsync(): Promise {
+        let builds: ?Object[] = await priv(this).buildPromise;
         
-        await Bluebird.map(builds, async (build) => {
+        await Bluebird.map(builds, async (build: Object) => {
             let { targets, definitions, output } = build;
             
             await Bluebird.map(targets, async (target) => {
