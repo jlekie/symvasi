@@ -7,9 +7,17 @@
     "isShellCommand": true,
     "tasks": [
         {
-            "taskName": "gulp",
+            "taskName": "build",
+            "suppressTaskName": true,
             "isBuildCommand": true,
-            "args": [ "build" ],
+            "args": [ "gulp", "build" ],
+            "showOutput": "always"
+        },
+        {
+            "taskName": "watch",
+            "suppressTaskName": true,
+            "isWatching": true,
+            "args": [ "gulp", "watch" ],
             "showOutput": "always"
         }
     ]
