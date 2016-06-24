@@ -74,7 +74,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
     }).then(_.fromPairs);
     
     let parsedBuilds = await Bluebird.map(builds, async (build) => {
-        let { targets, templates, output } = build;
+        let { targets, options, templates, output } = build;
         
         let templatePaths = await Bluebird.map(templates, async (template) => {
             let globPath = Path.resolve(templatesPath, template);
@@ -87,7 +87,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
             
             let templateName = Path.basename(templatePath, '.yml');
             
-            return new Definition(templateName, templateParams);
+            return new Definition(templateName, templateParams, options);
         });
         
         let parsedTargets = _.map(targets, t => compiledTargets[t]);
