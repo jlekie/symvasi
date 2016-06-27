@@ -19,4 +19,8 @@ export default class Manifest {
     }
     
     get name() { return priv(this).name; }
+
+    resolveContext(context) {
+        return _.defaults({ name: this.name, context: context }, this);
+    }
 }

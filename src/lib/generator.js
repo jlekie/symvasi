@@ -61,19 +61,21 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
             let outputPath = Path.relative(outputsPath, outputFilePath);
             outputPath = outputPath.slice(0, 0 - Path.basename(outputFilePath).length);
             
-            let outputName = Path.basename(outputFilePath, '.tpl');
-            if (outputName === 'main') { outputName = ''; }
+            let outputName = Path.relative(outputsPath, outputFilePath);
+            outputName = outputName.slice(0, -4);
+            
+            // let outputName = Path.basename(outputFilePath, '.tpl');
+            // if (outputName === 'main') { outputName = ''; }
 
-            return {
-                name: outputName,
+            return [ outputName, {
                 path: outputPath,
                 compiledTemplate: compiledOutput
-            };
-        });
+            }];
+        }).then(_.fromPairs);
         
         return [ target, {
             params: targetParams,
-            outputs: compiledOutputs
+            outputTemplates: compiledOutputs
         }];
     }).then(_.fromPairs);
     
@@ -120,19 +122,54 @@ export default class Generator {
     
     async generateAsync(): Promise {
         let builds: ?Object[] = await priv(this).buildPromise;
+
+        let handlebars = HandlebarsContext();
         
         await Bluebird.map(builds, async (build: Object) => {
             let { targets, definitions, output } = build;
             
             await Bluebird.map(targets, async (target) => {
-                await Bluebird.map(target.outputs, async (targetOutput) => {
+                let { outputs: targetOutputs } = target.params;
+                
+                await Bluebird.map(targetOutputs, async (targetOutput) => {
+                    let outputTemplate = target.outputTemplates[targetOutput.templateName];
+                    if (!outputTemplate) {
+                        throw new Error(`Output template '${targetOutput.templateName}' not defined`);
+                    }
+
                     await Bluebird.map(definitions, async (definition) => {
-                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}${_.upperFirst(target.params.filenamePostfix || '')}${_.upperFirst(targetOutput.name)}.${target.params.extension}`);
-                        
-                        logger.info(`Generating output for ${outputPath}...`);
-                        
-                        let generatedFile = targetOutput.compiledTemplate(definition);
-                        await FS.outputFileAsync(outputPath, generatedFile);
+                        let context = definition;
+                        if (targetOutput.context) {
+                            context = _.get(context, targetOutput.context);
+                            if (!context) {
+                                throw new Error(`Context "${targetOutput.context}" failed to resolve`);
+                            }
+                        }
+
+                        if (_.isArray(context)) {
+                            await Bluebird.map(context, async (itemContext) => {
+                                let normalizedContext = definition.resolveContext(itemContext);
+
+                                let outputPathTemplate = handlebars.compile(targetOutput.path);
+                                let outputPath = Path.resolve(output, outputPathTemplate(normalizedContext));
+                                
+                                logger.info(`Generating output for ${outputPath}...`);
+                                
+                                let generatedFile = outputTemplate.compiledTemplate(normalizedContext);
+                                await FS.outputFileAsync(outputPath, generatedFile);
+                            });
+                        }
+                        else {
+                            let normalizedContext = definition.resolveContext(context);
+                            
+                            let outputPathTemplate = handlebars.compile(targetOutput.path);
+                            let outputPath = Path.resolve(output, outputPathTemplate(normalizedContext));
+                            
+                            logger.info(`Generating output for ${outputPath}...`);
+                            
+                            let generatedFile = outputTemplate.compiledTemplate(normalizedContext);
+                            await FS.outputFileAsync(outputPath, generatedFile);
+                        }
                     });
                 });
             });
