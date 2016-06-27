@@ -132,7 +132,7 @@ export default class Generator {
                         logger.info(`Generating output for ${outputPath}...`);
                         
                         let generatedFile = targetOutput.compiledTemplate(definition);
-                        await FS.outputFileAsync(Path.resolve(output, targetOutput.path, `${definition.name}.${target.params.extension}`), generatedFile);
+                        await FS.outputFileAsync(outputPath, generatedFile);
                     });
                 });
             });
