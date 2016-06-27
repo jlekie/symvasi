@@ -127,7 +127,7 @@ export default class Generator {
             await Bluebird.map(targets, async (target) => {
                 await Bluebird.map(target.outputs, async (targetOutput) => {
                     await Bluebird.map(definitions, async (definition) => {
-                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}${_.upperFirst(targetOutput.name)}.${target.params.extension}`);
+                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}${_.upperFirst(target.params.filenamePostfix || '')}${_.upperFirst(targetOutput.name)}.${target.params.extension}`);
                         
                         logger.info(`Generating output for ${outputPath}...`);
                         
