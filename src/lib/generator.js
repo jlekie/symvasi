@@ -61,7 +61,11 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
             let outputPath = Path.relative(outputsPath, outputFilePath);
             outputPath = outputPath.slice(0, 0 - Path.basename(outputFilePath).length);
             
+            let outputName = Path.basename(outputFilePath, '.tpl');
+            if (outputName === 'main') { outputName = ''; }
+
             return {
+                name: outputName,
                 path: outputPath,
                 compiledTemplate: compiledOutput
             };
@@ -123,7 +127,7 @@ export default class Generator {
             await Bluebird.map(targets, async (target) => {
                 await Bluebird.map(target.outputs, async (targetOutput) => {
                     await Bluebird.map(definitions, async (definition) => {
-                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}.${target.params.extension}`);
+                        let outputPath = Path.resolve(output, targetOutput.path, `${definition.name}${_.upperFirst(targetOutput.name)}.${target.params.extension}`);
                         
                         logger.info(`Generating output for ${outputPath}...`);
                         
