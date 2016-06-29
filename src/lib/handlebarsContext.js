@@ -113,6 +113,16 @@ export default function createHandlebars() {
             return options.inverse(this);
         }
     });
+    handlebars.registerHelper('isTypeUnsafe', function isTypeList(type, options) {
+        let { root: definition } = options.data;
+        
+        if (_.startsWith(type.toString(), 'unsafe:')) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
     
     return handlebars;
 }
