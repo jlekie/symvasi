@@ -30,7 +30,7 @@ export default function createHandlebars() {
             return '';
         }
     });
-    handlebars.registerHelper('getArrayType', function getListType(type, options) {
+    handlebars.registerHelper('getArrayType', function getArrayType(type, options) {
         if (_.startsWith(type.toString(), 'array:')) {
             return new Handlebars.SafeString(type.toString().slice(6));
         }
@@ -38,7 +38,7 @@ export default function createHandlebars() {
             return '';
         }
     });
-    handlebars.registerHelper('getUnsafeType', function getListType(type, options) {
+    handlebars.registerHelper('getUnsafeType', function getUnsafeType(type, options) {
         if (_.startsWith(type.toString(), 'unsafe:')) {
             return new Handlebars.SafeString(type.toString().slice(7));
         }
@@ -99,6 +99,14 @@ export default function createHandlebars() {
                 return options.inverse(this);
         }
     });
+    handlebars.registerHelper('isTypeByte', function isTypeByte(type, options) {
+        switch (type.toString()) {
+            case 'byte':
+                return options.fn(this);
+            default:
+                return options.inverse(this);
+        }
+    });
     handlebars.registerHelper('isTypeEnum', function isTypeEnum(type, options) {
         let { root: definition } = options.data;
         
@@ -129,7 +137,7 @@ export default function createHandlebars() {
             return options.inverse(this);
         }
     });
-    handlebars.registerHelper('isTypeArray', function isTypeList(type, options) {
+    handlebars.registerHelper('isTypeArray', function isTypeArray(type, options) {
         let { root: definition } = options.data;
         
         if (_.startsWith(type.toString(), 'array:')) {
@@ -139,7 +147,7 @@ export default function createHandlebars() {
             return options.inverse(this);
         }
     });
-    handlebars.registerHelper('isTypeUnsafe', function isTypeList(type, options) {
+    handlebars.registerHelper('isTypeUnsafe', function isTypeUnsafe(type, options) {
         let { root: definition } = options.data;
         
         if (_.startsWith(type.toString(), 'unsafe:')) {
