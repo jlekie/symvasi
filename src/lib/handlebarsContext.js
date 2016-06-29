@@ -19,6 +19,15 @@ export default function createHandlebars() {
     handlebars.registerHelper('snakeCase', value => value ? new Handlebars.SafeString(_.snakeCase(value.toString())) : '');
     handlebars.registerHelper('resolvePath', value => value ? new Handlebars.SafeString(Path.resolve(value.toString())) : '');
     
+    handlebars.registerHelper('isObject', function isType(type, options) {
+        if (_.isObject(type)) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+
     handlebars.registerHelper('format', (value, ...params) => {
         params.pop();
         
