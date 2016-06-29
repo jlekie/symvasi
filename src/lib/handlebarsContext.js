@@ -30,6 +30,22 @@ export default function createHandlebars() {
             return '';
         }
     });
+    handlebars.registerHelper('getArrayType', function getListType(type, options) {
+        if (_.startsWith(type.toString(), 'array:')) {
+            return new Handlebars.SafeString(type.toString().slice(6));
+        }
+        else {
+            return '';
+        }
+    });
+    handlebars.registerHelper('getUnsafeType', function getListType(type, options) {
+        if (_.startsWith(type.toString(), 'unsafe:')) {
+            return new Handlebars.SafeString(type.toString().slice(7));
+        }
+        else {
+            return '';
+        }
+    });
     
     handlebars.registerHelper('isType', function isType(type, targetType, options) {
         if (type.toString() === targetType) {
@@ -107,6 +123,16 @@ export default function createHandlebars() {
         let { root: definition } = options.data;
         
         if (_.startsWith(type.toString(), 'list:')) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeArray', function isTypeList(type, options) {
+        let { root: definition } = options.data;
+        
+        if (_.startsWith(type.toString(), 'array:')) {
             return options.fn(this);
         }
         else {
