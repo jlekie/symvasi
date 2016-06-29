@@ -1,11 +1,14 @@
 import _ from 'lodash';
 import Handlebars from 'handlebars';
+import Swag from 'swag';
 
 import Path from 'path';
 import Util from 'util';
 
 export default function createHandlebars() {
     let handlebars = Handlebars.create();
+
+    Swag.registerHelpers(handlebars);
     
     handlebars.registerHelper('lowerCase', value => value ? new Handlebars.SafeString(value.toString().toLowerCase()) : '');
     handlebars.registerHelper('upperCase', value => value ? new Handlebars.SafeString(value.toString().toUpperCase()) : '');
