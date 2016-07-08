@@ -1,3 +1,5 @@
+// @flow
+
 import _ from 'lodash';
 
 // Declare the private dataset.
@@ -5,12 +7,19 @@ const privData = new WeakMap();
 function priv(ctx) { return privData.get(ctx); }
 
 export default class Definition {
-    constructor(name, props, options = {}) {
+    name: string;
+    options: Object;
+    enums: Enum[];
+    contracts: Contract[];
+    models: Model[];
+    services: Service[];
+    extensions: Object;
+
+    constructor(name: string, props: Object, options: Object = {}) {
         privData.set(this, {
             name: name
         });
 
-        this.namespace = props.namespace;
         this.options = props.options ? _.cloneDeep(props.options) : {};
         this.enums = _.map(props.enums || [], props => new Enum(this, props));
         this.contracts = _.map(props.contracts || [], props => new Contract(this, props));
@@ -21,9 +30,9 @@ export default class Definition {
         _.assign(this.options, options);
     }
     
-    get name() { return priv(this).name; }
+    get name(): string { return priv(this).name; }
 
-    resolveContext(context) {
+    resolveContext(context: any): Object {
         return {
             name: this.name,
             options: this.options,
@@ -40,15 +49,20 @@ export default class Definition {
 }
 
 class Enum {
-    constructor(manifest, props) {
+    manifest: Definition;
+    name: string;
+    values: string[];
+    extensions: Object;
+
+    constructor(manifest: Definition, props: Object) {
         this.manifest = manifest;
 
         this.name = props.name;
-        this.values = props.values ? _.clone(props.values) : {};
+        this.values = props.values ? _.clone(props.values) : [];
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             values: _.clone(this.values),
@@ -58,7 +72,12 @@ class Enum {
     }
 }
 class Contract {
-    constructor(manifest, props) {
+    manifest: Definition;
+    name: string;
+    properties: ContractProperty[];
+    extensions: Object;
+
+    constructor(manifest: Definition, props: Object) {
         this.manifest = manifest;
 
         this.name = props.name;
@@ -66,7 +85,7 @@ class Contract {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             properties: this.properties.map(e => e.resolveContext()),
@@ -76,13 +95,19 @@ class Contract {
     }
 }
 class Model {
-    constructor(manifest, props) {
+    manifest: Definition;
+    name: string;
+    properties: ModelProperty[];
+    contracts: string[];
+    extensions: Object;
+
+    constructor(manifest: Definition, props: Object) {
         this.manifest = manifest;
         
         this.name = props.name;
         this.properties = _.map(props.properties || [], props => new ModelProperty(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
-        this.contracts = props.contracts ? _.clone(props.contracts) : {};
+        this.contracts = props.contracts ? _.clone(props.contracts) : [];
 
         let manifestContracts = this.getContracts();
         for (let contract of manifestContracts) {
@@ -100,7 +125,7 @@ class Model {
         }
     }
 
-    getContracts() {
+    getContracts(): Contract[] {
         return _.map(this.contracts || [], (contractName) => {
             let contract = _.find(this.manifest.contracts, contract => contract.name === contractName);
             if (!contract) { throw new Error(`Contract "${contractName}" not defined`); }
@@ -109,7 +134,7 @@ class Model {
         });
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             contracts: this.getContracts().map(e => e.resolveContext()),
@@ -120,7 +145,12 @@ class Model {
     }
 }
 class Service {
-    constructor(manifest, props) {
+    manifest: Definition;
+    name: string;
+    methods: ServiceMethod[];
+    extensions: Object;
+
+    constructor(manifest: Definition, props: Object) {
         this.manifest = manifest;
         
         this.name = props.name;
@@ -128,7 +158,7 @@ class Service {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             methods: this.methods.map(e => e.resolveContext()),
@@ -139,7 +169,12 @@ class Service {
 }
 
 class ContractProperty {
-    constructor(contract, props) {
+    contract: Contract;
+    name: string;
+    type: string;
+    extensions: Object;
+
+    constructor(contract: Contract, props: Object) {
         this.contract = contract;
 
         this.name = props.name;
@@ -147,7 +182,7 @@ class ContractProperty {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             type: this.type,
@@ -157,7 +192,12 @@ class ContractProperty {
     }
 }
 class ModelProperty {
-    constructor(model, props) {
+    model: Model;
+    name: string;
+    type: string;
+    extensions: Object;
+
+    constructor(model: Model, props: Object) {
         this.model = model;
 
         this.name = props.name;
@@ -165,7 +205,7 @@ class ModelProperty {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             type: this.type,
@@ -176,7 +216,13 @@ class ModelProperty {
 }
 
 class ServiceMethod {
-    constructor(service, props) {
+    service: Service;
+    name: string;
+    returnType: string;
+    params: MethodParam[];
+    extensions: Object;
+
+    constructor(service: Service, props: Object) {
         this.service = service;
 
         this.name = props.name;
@@ -185,7 +231,7 @@ class ServiceMethod {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             returnType: this.returnType,
@@ -196,14 +242,18 @@ class ServiceMethod {
     }
 }
 class MethodParam {
-    constructor(manifest, props) {
-        this.manifest = manifest;
+    serviceMethod: ServiceMethod;
+    name: string;
+    type: string;
+
+    constructor(serviceMethod: ServiceMethod, props: Object) {
+        this.serviceMethod = serviceMethod;
         
         this.name = props.name;
         this.type = props.type;
     }
 
-    resolveContext() {
+    resolveContext(): Object {
         return {
             name: this.name,
             type: this.type
