@@ -28,6 +28,20 @@ export default function createHandlebars() {
         }
     });
 
+    handlebars.registerHelper('extension', function extension(extensionName, options) {
+        return this.extensions[extensionName] ? new Handlebars.SafeString(this.extensions[extensionName].toString()) : '';
+    });
+    handlebars.registerHelper('ifExtension', function extension(extensionName, options) {
+        let extensionValue = this.extensions[extensionName];
+
+        if (extensionValue) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+
     handlebars.registerHelper('format', (value, ...params) => {
         params.pop();
         
