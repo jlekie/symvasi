@@ -112,7 +112,7 @@ class Model {
     resolveContext() {
         return {
             name: this.name,
-            contracts: _.clone(this.contracts),
+            contracts: this.getContracts().map(e => e.resolveContext()),
             properties: this.properties.map(e => e.resolveContext()),
             
             extensions: _.assign({}, this.manifest.extensions, this.extensions)
