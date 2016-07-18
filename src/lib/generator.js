@@ -25,7 +25,13 @@ const GlobAsync = Bluebird.promisify(Glob);
 const privData = new WeakMap();
 function priv(ctx): Privs { return privData.get(ctx); }
 
-async function parseBuildsAsync(builds: Object[], targetsPath: string, templatesPath: string): Promise<Object[]> {
+type ParsedBuild = {
+    targets: Object[],
+    definitions: Definition[],
+    output: string
+}
+
+async function parseBuildsAsync(builds: Object[], targetsPath: string, templatesPath: string): Promise<ParsedBuild[]> {
     let targets = _(builds)
         .map(b => b.targets)
         .flatten()
@@ -88,7 +94,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
             return await GlobAsync(globPath);
         }).then(_.flatten);
         
-        let parsedDefinitions = await Bluebird.map(templatePaths, async (templatePath) => {
+        let parsedDefinitions: Definition[] = await Bluebird.map(templatePaths, async (templatePath) => {
             let templateParams = await FS.readFileAsync(templatePath, 'utf8').then(content => Yaml.safeLoad(content));
             
             let templateName = Path.basename(templatePath, '.yml');
@@ -120,12 +126,12 @@ export default class Generator {
         priv(this).buildPromise = parseBuildsAsync.call(this, builds, targetsPath, templatesPath);
     }
     
-    async generateAsync(): Promise {
-        let builds: ?Object[] = await priv(this).buildPromise;
+    async generateAsync(): Promise<any> {
+        let builds: ?ParsedBuild[] = await priv(this).buildPromise;
 
         let handlebars = HandlebarsContext();
         
-        await Bluebird.map(builds, async (build: Object) => {
+        await Bluebird.map(builds, async (build: ParsedBuild) => {
             let { targets, definitions, output } = build;
             
             await Bluebird.map(targets, async (target) => {
@@ -137,7 +143,7 @@ export default class Generator {
                         throw new Error(`Output template '${targetOutput.templateName}' not defined`);
                     }
 
-                    await Bluebird.map(definitions, async (definition) => {
+                    await Bluebird.map(definitions, async (definition: Definition) => {
                         let context = definition;
                         if (targetOutput.context) {
                             context = _.get(context, targetOutput.context);
