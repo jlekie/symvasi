@@ -42,7 +42,7 @@ export default function createHandlebars() {
         }
     });
 
-    handlebars.registerHelper('format', (value, ...params) => {
+    handlebars.registerHelper('format', function format(value, ...params) {
         params.pop();
         
         return value ? new Handlebars.SafeString(Util.format(value.toString(), ...params)) : '';
@@ -54,6 +54,15 @@ export default function createHandlebars() {
         }
         else {
             return '';
+        }
+    });
+
+    handlebars.registerHelper('isTypeNullable', function isTypeNullable(type, options) {
+        if (_.endsWith(type.toString(), '?')) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
         }
     });
     
@@ -68,7 +77,9 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeString', function isTypeString(type, options) {
         switch (type.toString()) {
             case 'str':
+            case 'str?':
             case 'string':
+            case 'string?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -77,7 +88,9 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeBoolean', function isTypeBoolean(type, options) {
         switch (type.toString()) {
             case 'bool':
+            case 'bool?':
             case 'boolean':
+            case 'boolean?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -86,7 +99,9 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeInteger', function isTypeInteger(type, options) {
         switch (type.toString()) {
             case 'int':
+            case 'int?':
             case 'integer':
+            case 'integer?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -95,7 +110,9 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeFloat', function isTypeFloat(type, options) {
         switch (type.toString()) {
             case 'float':
+            case 'float?':
             case 'single':
+            case 'single?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -104,6 +121,7 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeDouble', function isTypeDouble(type, options) {
         switch (type.toString()) {
             case 'double':
+            case 'double?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -112,6 +130,7 @@ export default function createHandlebars() {
     handlebars.registerHelper('isTypeByte', function isTypeByte(type, options) {
         switch (type.toString()) {
             case 'byte':
+            case 'byte?':
                 return options.fn(this);
             default:
                 return options.inverse(this);
@@ -119,8 +138,10 @@ export default function createHandlebars() {
     });
     handlebars.registerHelper('isTypeEnum', function isTypeEnum(type, options) {
         let { root: definition } = options.data;
+
+        let enumName = _.trimEnd(type.toString(), '?');
         
-        if (_.some(definition.enums, e => e.name === type.toString())) {
+        if (_.some(definition.enums, e => e.name === enumName)) {
             return options.fn(this);
         }
         else {
@@ -129,8 +150,10 @@ export default function createHandlebars() {
     });
     handlebars.registerHelper('isTypeModel', function isTypeModel(type, options) {
         let { root: definition } = options.data;
+
+        let modelName = _.trimEnd(type.toString(), '?');
         
-        if (_.some(definition.models, e => e.name === type.toString())) {
+        if (_.some(definition.models, e => e.name === modelName)) {
             return options.fn(this);
         }
         else {
