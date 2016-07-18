@@ -48,17 +48,23 @@ export default function createHandlebars() {
         return value ? new Handlebars.SafeString(Util.format(value.toString(), ...params)) : '';
     });
     
-    handlebars.registerHelper('getListType', function getListType(type, options) {
-        if (_.startsWith(type.toString(), 'list:')) {
-            return new Handlebars.SafeString(type.toString().slice(5));
+    handlebars.registerHelper('getListType', function getListType(...params) {
+        params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'list') {
+            return this.itemType.dataType;
         }
         else {
             return '';
         }
     });
 
-    handlebars.registerHelper('isTypeNullable', function isTypeNullable(type, options) {
-        if (_.endsWith(type.toString(), '?')) {
+    handlebars.registerHelper('isTypeNullable', function isTypeNullable(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.nullable) {
             return options.fn(this);
         }
         else {
@@ -66,118 +72,126 @@ export default function createHandlebars() {
         }
     });
     
-    handlebars.registerHelper('isType', function isType(type, targetType, options) {
-        if (type.toString() === targetType) {
-            return options.fn(this);
-        }
-        else {
-            return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeString', function isTypeString(type, options) {
-        switch (type.toString()) {
-            case 'str':
-            case 'str?':
-            case 'string':
-            case 'string?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeBoolean', function isTypeBoolean(type, options) {
-        switch (type.toString()) {
-            case 'bool':
-            case 'bool?':
-            case 'boolean':
-            case 'boolean?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeInteger', function isTypeInteger(type, options) {
-        switch (type.toString()) {
-            case 'int':
-            case 'int?':
-            case 'integer':
-            case 'integer?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeFloat', function isTypeFloat(type, options) {
-        switch (type.toString()) {
-            case 'float':
-            case 'float?':
-            case 'single':
-            case 'single?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeDouble', function isTypeDouble(type, options) {
-        switch (type.toString()) {
-            case 'double':
-            case 'double?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeByte', function isTypeByte(type, options) {
-        switch (type.toString()) {
-            case 'byte':
-            case 'byte?':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
-        }
-    });
-    handlebars.registerHelper('isTypeEnum', function isTypeEnum(type, options) {
-        let { root: definition } = options.data;
+    handlebars.registerHelper('isType', function isType(...params) {
+        let options = params.pop();
+        let targetType = params.shift();
+        let ctx = params.shift() || this;
 
-        let enumName = _.trimEnd(type.toString(), '?');
-        
-        if (_.some(definition.enums, e => e.name === enumName)) {
+        if (ctx.dataType === targetType) {
             return options.fn(this);
         }
         else {
             return options.inverse(this);
         }
     });
-    handlebars.registerHelper('isTypeModel', function isTypeModel(type, options) {
-        let { root: definition } = options.data;
+    handlebars.registerHelper('isTypeString', function isTypeString(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
 
-        let modelName = _.trimEnd(type.toString(), '?');
-        
-        if (_.some(definition.models, e => e.name === modelName)) {
+        if (ctx.dataType === 'string') {
             return options.fn(this);
         }
         else {
             return options.inverse(this);
         }
     });
-    handlebars.registerHelper('isTypeList', function isTypeList(type, options) {
-        let { root: definition } = options.data;
-        
-        if (_.startsWith(type.toString(), 'list:')) {
+    handlebars.registerHelper('isTypeBoolean', function isTypeBoolean(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'boolean') {
             return options.fn(this);
         }
         else {
             return options.inverse(this);
         }
     });
-    handlebars.registerHelper('isTypeAny', function isTypeAny(type, options) {
-        let { root: definition } = options.data;
-        
-        switch (type.toString()) {
-            case 'any':
-                return options.fn(this);
-            default:
-                return options.inverse(this);
+    handlebars.registerHelper('isTypeInteger', function isTypeInteger(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'integer') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeFloat', function isTypeFloat(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'float') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeDouble', function isTypeDouble(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'double') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeByte', function isTypeByte(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'byte') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeEnum', function isTypeEnum(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'enum') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeModel', function isTypeModel(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'model') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeList', function isTypeList(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'list') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeAny', function isTypeAny(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'any') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
         }
     });
     

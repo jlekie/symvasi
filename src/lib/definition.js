@@ -15,10 +15,16 @@ export default class Definition {
     services: Service[];
     extensions: Object;
 
+    enumNames: string[];
+    modelNames: string[];
+
     constructor(name: string, props: Object, options: Object = {}) {
         privData.set(this, {
             name: name
         });
+
+        this.enumNames = _.map(props.enums || [], e => e.name);
+        this.modelNames = _.map(props.models || [], e => e.name);
 
         this.options = props.options ? _.cloneDeep(props.options) : {};
         this.enums = _.map(props.enums || [], props => new Enum(this, props));
@@ -114,7 +120,7 @@ class Model {
             for (let prop of contract.properties) {
                 let existingProp = _.find(this.properties, existingProp => existingProp.name === prop.name);
                 if (!existingProp) {
-                    this.properties.push(new ModelProperty(this, prop));
+                    this.properties.push(prop.createModelProperty(this));
                 }
                 else {
                     if (existingProp.type !== prop.type) {
@@ -171,21 +177,29 @@ class Service {
 class ContractProperty {
     contract: Contract;
     name: string;
-    type: string;
+    type: DataType;
     extensions: Object;
+
+    source: Object;
 
     constructor(contract: Contract, props: Object) {
         this.contract = contract;
 
         this.name = props.name;
-        this.type = props.type;
+        this.type = DataType.parseDataType(props.type, this.contract.manifest);
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
+
+        this.source = props;
+    }
+
+    createModelProperty(model: Model): ModelProperty {
+        return new ModelProperty(model, this.source);
     }
 
     resolveContext(): Object {
         return {
             name: this.name,
-            type: this.type,
+            type: this.type.resolveContext(),
             
             extensions: _.assign({}, this.contract.manifest.extensions, this.contract.extensions, this.extensions)
         };
@@ -194,21 +208,21 @@ class ContractProperty {
 class ModelProperty {
     model: Model;
     name: string;
-    type: string;
+    type: DataType;
     extensions: Object;
 
     constructor(model: Model, props: Object) {
         this.model = model;
 
         this.name = props.name;
-        this.type = props.type;
+        this.type = DataType.parseDataType(props.type, this.model.manifest);
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
     resolveContext(): Object {
         return {
             name: this.name,
-            type: this.type,
+            type: this.type.resolveContext(),
             
             extensions: _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions)
         };
@@ -218,7 +232,7 @@ class ModelProperty {
 class ServiceMethod {
     service: Service;
     name: string;
-    returnType: string;
+    returnType: DataType;
     params: MethodParam[];
     extensions: Object;
 
@@ -226,7 +240,7 @@ class ServiceMethod {
         this.service = service;
 
         this.name = props.name;
-        this.returnType = props.returnType;
+        this.returnType = DataType.parseDataType(props.returnType, this.service.manifest);
         this.params = _.map(props.params || [], props => new MethodParam(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
@@ -234,7 +248,7 @@ class ServiceMethod {
     resolveContext(): Object {
         return {
             name: this.name,
-            returnType: this.returnType,
+            returnType: this.returnType.resolveContext(),
             params: this.params.map(e => e.resolveContext()),
             
             extensions: _.assign({}, this.service.manifest.extensions, this.service.extensions, this.extensions)
@@ -244,19 +258,220 @@ class ServiceMethod {
 class MethodParam {
     serviceMethod: ServiceMethod;
     name: string;
-    type: string;
+    type: DataType;
 
     constructor(serviceMethod: ServiceMethod, props: Object) {
         this.serviceMethod = serviceMethod;
         
         this.name = props.name;
-        this.type = props.type;
+        this.type = DataType.parseDataType(props.type, this.serviceMethod.service.manifest);
     }
 
     resolveContext(): Object {
         return {
             name: this.name,
-            type: this.type
+            type: this.type.resolveContext()
+        };
+    }
+}
+
+class DataType {
+    manifest: Definition;
+    nullable: boolean;
+
+    static parseDataType(dataType: string, manifest: Definition) {
+        let normalizedDataType: string = _.trimEnd(dataType, '?');
+        let nullable: boolean = _.endsWith(dataType, '?');
+
+        switch (normalizedDataType) {
+            case 'string':
+                return new StringDataType(manifest, nullable);
+            case 'bool':
+            case 'boolean':
+                return new BooleanDataType(manifest, nullable);
+            case 'int':
+            case 'integer':
+                return new IntegerDataType(manifest, nullable);
+            case 'float':
+            case 'single':
+                return new FloatDataType(manifest, nullable);
+            case 'double':
+                return new DoubleDataType(manifest, nullable);
+            case 'byte':
+                return new ByteDataType(manifest, nullable);
+            case 'any':
+                return new AnyDataType(manifest, nullable);
+            default:
+                if (_.some(manifest.enumNames, e => e === normalizedDataType)) {
+                    return new EnumDataType(manifest, nullable, normalizedDataType);
+                }
+                else if (_.some(manifest.modelNames, e => e === normalizedDataType)) {
+                    return new ModelDataType(manifest, nullable, normalizedDataType);
+                }
+                else if (_.startsWith(normalizedDataType, 'list:')) {
+                    return new ListDataType(manifest, nullable, normalizedDataType.slice(5));
+                }
+                else {
+                    throw new Error(`Type "${dataType}" not supported`);
+                }
+        }
+    }
+
+    constructor(manifest: Definition, nullable: boolean) {
+        this.manifest = manifest;
+        this.nullable = nullable;
+    }
+
+    resolveContext() {
+        throw new Error('Not implemented');
+    }
+}
+class StringDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'string'
+        };
+    }
+}
+class BooleanDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+    
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'boolean'
+        };
+    }
+}
+class IntegerDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'integer'
+        };
+    }
+}
+class FloatDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'float'
+        };
+    }
+}
+class DoubleDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'double'
+        };
+    }
+}
+class ByteDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'byte'
+        };
+    }
+}
+class EnumDataType extends DataType {
+    enumName: string;
+
+    constructor(manifest: Definition, nullable: boolean, enumName: string) {
+        super(manifest, nullable);
+
+        this.enumName = enumName;
+    }
+
+    getEnum(): Enum {
+        let foundEnum = _.find(this.manifest.enums, e => e.name === this.enumName);
+        if (!foundEnum) { throw new Error(`Enum "${this.enumName}" not defined`); }
+
+        return foundEnum;
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'enum',
+            enumName: this.getEnum().name
+        };
+    }
+}
+class ModelDataType extends DataType {
+    modelName: string;
+
+    constructor(manifest: Definition, nullable: boolean, modelName: string) {
+        super(manifest, nullable);
+
+        this.modelName = modelName;
+    }
+
+    getModel(): Enum {
+        let foundModel = _.find(this.manifest.models, e => e.name === this.modelName);
+        if (!foundModel) { throw new Error(`Model "${this.modelName}" not defined`); }
+
+        return foundModel;
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'model',
+            modelName: this.getModel().name
+        };
+    }
+}
+class ListDataType extends DataType {
+    itemType: DataType;
+
+    constructor(manifest: Definition, nullable: boolean, itemType: string) {
+        super(manifest, nullable);
+
+        this.itemType = DataType.parseDataType(itemType, manifest);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'list',
+            itemType: this.itemType.resolveContext()
+        };
+    }
+}
+class AnyDataType extends DataType {
+    constructor(manifest: Definition, nullable: boolean) {
+        super(manifest, nullable);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'any'
         };
     }
 }
