@@ -248,7 +248,7 @@ class ServiceMethod {
     resolveContext(): Object {
         return {
             name: this.name,
-            returnType: this.returnType.resolveContext(),
+            returnType: this.returnType ? this.returnType.resolveContext() : undefined,
             params: this.params.map(e => e.resolveContext()),
             
             extensions: _.assign({}, this.service.manifest.extensions, this.service.extensions, this.extensions)
