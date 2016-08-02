@@ -240,7 +240,7 @@ class ServiceMethod {
         this.service = service;
 
         this.name = props.name;
-        this.returnType = DataType.parseDataType(props.returnType, this.service.manifest);
+        if (props.returnType) { this.returnType = DataType.parseDataType(props.returnType, this.service.manifest); }
         this.params = _.map(props.params || [], props => new MethodParam(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
