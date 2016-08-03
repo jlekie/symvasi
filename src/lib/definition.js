@@ -443,7 +443,7 @@ class ModelDataType extends DataType {
         this.modelName = modelName;
     }
 
-    getModel(): Enum {
+    getModel(): Model {
         let foundModel = _.find(this.manifest.models, e => e.name === this.modelName);
         if (!foundModel) { throw new Error(`Model "${this.modelName}" not defined`); }
 
@@ -451,10 +451,13 @@ class ModelDataType extends DataType {
     }
 
     resolveContext(): Object {
+        let model = this.getModel();
+        
         return {
             nullable: this.nullable,
             dataType: 'model',
-            modelName: this.getModel().name
+            modelName: model.name,
+            abstract: model.abstract
         };
     }
 }
