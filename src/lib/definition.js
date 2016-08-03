@@ -103,6 +103,8 @@ class Contract {
 class Model {
     manifest: Definition;
     name: string;
+    abstract: boolean;
+    baseModel: string;
     properties: ModelProperty[];
     contracts: string[];
     extensions: Object;
@@ -111,6 +113,8 @@ class Model {
         this.manifest = manifest;
         
         this.name = props.name;
+        this.abstract = props.abstract;
+        this.baseModel = props.baseModel;
         this.properties = _.map(props.properties || [], props => new ModelProperty(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
         this.contracts = props.contracts ? _.clone(props.contracts) : [];
@@ -139,10 +143,18 @@ class Model {
             return contract;
         });
     }
+    getBaseModel(): Model {
+        let model = _.find(this.manifest.models, model => model.name === this.baseModel);
+        if (!model) { throw new Error(`Base model "${this.baseModel}" not defined`); }
+
+        return model;
+    }
 
     resolveContext(): Object {
         return {
             name: this.name,
+            abstract: this.abstract,
+            baseModel: this.getBaseModel().resolveContext(),
             contracts: this.getContracts().map(e => e.resolveContext()),
             properties: this.properties.map(e => e.resolveContext()),
             
