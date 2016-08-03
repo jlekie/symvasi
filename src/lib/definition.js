@@ -154,7 +154,7 @@ class Model {
         return {
             name: this.name,
             abstract: this.abstract,
-            baseModel: this.getBaseModel().resolveContext(),
+            baseModel: this.baseModel ? this.getBaseModel().resolveContext() : undefined,
             contracts: this.getContracts().map(e => e.resolveContext()),
             properties: this.properties.map(e => e.resolveContext()),
             
