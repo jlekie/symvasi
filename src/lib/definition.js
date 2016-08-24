@@ -106,6 +106,7 @@ class Model {
     abstract: boolean;
     baseModel: string;
     properties: ModelProperty[];
+    methods: ModelMethod[];
     contracts: string[];
     extensions: Object;
 
@@ -116,6 +117,7 @@ class Model {
         this.abstract = props.abstract;
         this.baseModel = props.baseModel;
         this.properties = _.map(props.properties || [], props => new ModelProperty(this, props));
+        this.methods = _.map(props.methods || [], props => new ModelMethod(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
         this.contracts = props.contracts ? _.clone(props.contracts) : [];
 
@@ -241,11 +243,57 @@ class ModelProperty {
     }
 }
 
+class ModelMethod {
+    model: Model;
+    name: string;
+    returnType: DataType;
+    params: ModelMethodParam[];
+    extensions: Object;
+
+    constructor(model: Model, props: Object) {
+        this.model = model;
+
+        this.name = props.name;
+        if (props.returnType) { this.returnType = DataType.parseDataType(props.returnType, this.model.manifest); }
+        this.params = _.map(props.params || [], props => new ModelMethodParam(this, props));
+        this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
+    }
+
+    resolveContext(): Object {
+        return {
+            name: this.name,
+            returnType: this.returnType ? this.returnType.resolveContext() : undefined,
+            params: this.params.map(e => e.resolveContext()),
+            
+            extensions: _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions)
+        };
+    }
+}
+class ModelMethodParam {
+    modelMethod: ModelMethod;
+    name: string;
+    type: DataType;
+
+    constructor(modelMethod: ModelMethod, props: Object) {
+        this.modelMethod = modelMethod;
+        
+        this.name = props.name;
+        this.type = DataType.parseDataType(props.type, this.modelMethod.model.manifest);
+    }
+
+    resolveContext(): Object {
+        return {
+            name: this.name,
+            type: this.type.resolveContext()
+        };
+    }
+}
+
 class ServiceMethod {
     service: Service;
     name: string;
     returnType: DataType;
-    params: MethodParam[];
+    params: ServiceMethodParam[];
     extensions: Object;
 
     constructor(service: Service, props: Object) {
@@ -253,7 +301,7 @@ class ServiceMethod {
 
         this.name = props.name;
         if (props.returnType) { this.returnType = DataType.parseDataType(props.returnType, this.service.manifest); }
-        this.params = _.map(props.params || [], props => new MethodParam(this, props));
+        this.params = _.map(props.params || [], props => new ServiceMethodParam(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
@@ -267,7 +315,7 @@ class ServiceMethod {
         };
     }
 }
-class MethodParam {
+class ServiceMethodParam {
     serviceMethod: ServiceMethod;
     name: string;
     type: DataType;
