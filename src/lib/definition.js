@@ -159,6 +159,7 @@ class Model {
             baseModel: this.baseModel ? this.getBaseModel().resolveContext() : undefined,
             contracts: this.getContracts().map(e => e.resolveContext()),
             properties: this.properties.map(e => e.resolveContext()),
+            methods: this.methods.map(e => e.resolveContext()),
             
             extensions: _.assign({}, this.manifest.extensions, this.extensions)
         };
