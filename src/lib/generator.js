@@ -28,6 +28,7 @@ function priv(ctx): Privs { return privData.get(ctx); }
 type ParsedBuild = {
     targets: Object[],
     definitions: Definition[],
+    augmentations: Definition[],
     output: string
 }
 
@@ -86,18 +87,43 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
     }).then(_.fromPairs);
     
     let parsedBuilds = await Bluebird.map(builds, async (build) => {
-        let { targets, options, templates, output } = build;
+        let { targets, options, templates, augmentations, output } = build;
         
+        let parsedAugmentations = {};
+        let augmentationPaths = await Bluebird.map(augmentations, async (augmentation) => {
+            let globPath = Path.resolve(templatesPath, augmentation);
+            
+            return await GlobAsync(globPath);
+        }).then(_.flatten);
+        await Bluebird.map(augmentationPaths, async (augmentationPath) => {
+            let augmentationParams = await FS.readFileAsync(augmentationPath, 'utf8').then(content => Yaml.safeLoad(content));
+            let augmentationName = Path.basename(augmentationPath, '.yml');
+            let fqn = augmentationParams.fqn || augmentationName;
+
+            parsedAugmentations[fqn] = augmentationParams;
+        });
+
         let templatePaths = await Bluebird.map(templates, async (template) => {
             let globPath = Path.resolve(templatesPath, template);
             
             return await GlobAsync(globPath);
         }).then(_.flatten);
-        
         let parsedDefinitions: Definition[] = await Bluebird.map(templatePaths, async (templatePath) => {
             let templateParams = await FS.readFileAsync(templatePath, 'utf8').then(content => Yaml.safeLoad(content));
-            
             let templateName = Path.basename(templatePath, '.yml');
+            let fqn = templateParams.fqn || templateName;
+
+            if (parsedAugmentations[fqn]) {
+                let augmentation = parsedAugmentations[fqn];
+
+                _.each(augmentation.models, (augmentedModel) => {
+                    let model = _.find(templateParams.models, model => model.name === augmentedModel.name);
+
+                    model.methods = model.methods || [];
+                    for (let augmentedMethod of augmentedModel.methods)
+                        model.methods.push(augmentedMethod);
+                });
+            }
             
             return new Definition(templateName, templateParams, options);
         });
@@ -109,6 +135,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
         return {
             targets: parsedTargets,
             definitions: parsedDefinitions,
+            augmentations: null,
             output: parsedOutput
         };
     });
