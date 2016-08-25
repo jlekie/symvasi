@@ -116,6 +116,9 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
             if (parsedAugmentations[fqn]) {
                 let augmentation = parsedAugmentations[fqn];
 
+                templateParams.extensions = templateParams.extensions || {};
+                _.assign(templateParams.extensions, augmentation.extensions || {});
+
                 _.each(augmentation.models, (augmentedModel) => {
                     let model = _.find(templateParams.models, model => model.name === augmentedModel.name);
 
