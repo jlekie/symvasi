@@ -247,6 +247,7 @@ class ModelProperty {
 class ModelMethod {
     model: Model;
     name: string;
+    isStatic: boolean;
     returnType: DataType;
     params: ModelMethodParam[];
     extensions: Object;
@@ -255,6 +256,7 @@ class ModelMethod {
         this.model = model;
 
         this.name = props.name;
+        this.isStatic = props.static;
         if (props.returnType) { this.returnType = DataType.parseDataType(props.returnType, this.model.manifest); }
         this.params = _.map(props.params || [], props => new ModelMethodParam(this, props));
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
@@ -263,6 +265,7 @@ class ModelMethod {
     resolveContext(): Object {
         return {
             name: this.name,
+            static: this.isStatic,
             returnType: this.returnType ? this.returnType.resolveContext() : undefined,
             params: this.params.map(e => e.resolveContext()),
             
