@@ -87,7 +87,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
     }).then(_.fromPairs);
     
     let parsedBuilds = await Bluebird.map(builds, async (build) => {
-        let { targets, options, templates, augmentations, output } = build;
+        let { targets, options, extensions, templates, augmentations, output } = build;
         
         let parsedAugmentations = {};
         let augmentationPaths = await Bluebird.map(augmentations, async (augmentation) => {
@@ -119,16 +119,19 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
                 templateParams.extensions = templateParams.extensions || {};
                 _.assign(templateParams.extensions, augmentation.extensions || {});
 
-                _.each(augmentation.models, (augmentedModel) => {
+                _.each(augmentation.models || [], (augmentedModel) => {
                     let model = _.find(templateParams.models, model => model.name === augmentedModel.name);
 
+                    model.extensions = model.extensions || {};
+                    _.assign(model.extensions, augmentedModel.extensions || {});
+
                     model.methods = model.methods || [];
-                    for (let augmentedMethod of augmentedModel.methods)
+                    for (let augmentedMethod of augmentedModel.methods || [])
                         model.methods.push(augmentedMethod);
                 });
             }
             
-            return new Definition(templateName, templateParams, options);
+            return new Definition(templateName, templateParams, options, extensions);
         });
         
         let parsedTargets = _.map(targets, t => compiledTargets[t]);

@@ -47,13 +47,27 @@ export default function createHandlebars() {
         
         return value ? new Handlebars.SafeString(Util.format(value.toString(), ...params)) : '';
     });
+    handlebars.registerHelper('template', function format(value, options) {
+        return value ? new Handlebars.SafeString(_.template(value.toString())(options.hash)) : '';
+    });
     
     handlebars.registerHelper('getListType', function getListType(...params) {
         params.pop();
         let ctx = params.shift() || this;
 
         if (ctx.dataType === 'list') {
-            return this.itemType.dataType;
+            return ctx.itemType.dataType;
+        }
+        else {
+            return '';
+        }
+    });
+    handlebars.registerHelper('getFutureType', function getFutureType(...params) {
+        params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'future' && ctx.resultType) {
+            return ctx.resultType.dataType;
         }
         else {
             return '';
@@ -177,6 +191,17 @@ export default function createHandlebars() {
         let ctx = params.shift() || this;
 
         if (ctx.dataType === 'list') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeFuture', function isTypeFuture(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'future') {
             return options.fn(this);
         }
         else {

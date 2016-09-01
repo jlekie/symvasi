@@ -18,7 +18,7 @@ export default class Definition {
     enumNames: string[];
     modelNames: string[];
 
-    constructor(name: string, props: Object, options: Object = {}) {
+    constructor(name: string, props: Object, options: Object, extensions: Object) {
         privData.set(this, {
             name: name
         });
@@ -34,6 +34,7 @@ export default class Definition {
         this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
         
         _.assign(this.options, options);
+        _.assign(this.extensions, extensions);
     }
     
     get name(): string { return priv(this).name; }
@@ -375,6 +376,12 @@ class DataType {
                 else if (_.startsWith(normalizedDataType, 'list:')) {
                     return new ListDataType(manifest, nullable, normalizedDataType.slice(5));
                 }
+                else if (_.startsWith(normalizedDataType, 'future:')) {
+                    return new FutureDataType(manifest, nullable, normalizedDataType.slice(7));
+                }
+                else if (_.startsWith(normalizedDataType, 'future')) {
+                    return new FutureDataType(manifest, nullable);
+                }
                 else {
                     throw new Error(`Type "${dataType}" not supported`);
                 }
@@ -527,6 +534,24 @@ class ListDataType extends DataType {
             nullable: this.nullable,
             dataType: 'list',
             itemType: this.itemType.resolveContext()
+        };
+    }
+}
+class FutureDataType extends DataType {
+    resultType: DataType;
+
+    constructor(manifest: Definition, nullable: boolean, resultType?: string) {
+        super(manifest, nullable);
+
+        if (resultType)
+            this.resultType = DataType.parseDataType(resultType, manifest);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'future',
+            resultType: this.resultType ? this.resultType.resolveContext() : undefined
         };
     }
 }
