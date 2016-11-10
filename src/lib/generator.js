@@ -90,7 +90,7 @@ async function parseBuildsAsync(builds: Object[], targetsPath: string, templates
         let { targets, options, extensions, templates, augmentations, output } = build;
         
         let parsedAugmentations = {};
-        let augmentationPaths = await Bluebird.map(augmentations, async (augmentation) => {
+        let augmentationPaths = await Bluebird.map(augmentations || [], async (augmentation) => {
             let globPath = Path.resolve(templatesPath, augmentation);
             
             return await GlobAsync(globPath);
