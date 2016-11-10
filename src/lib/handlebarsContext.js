@@ -28,10 +28,72 @@ export default function createHandlebars() {
         }
     });
 
-    handlebars.registerHelper('extension', function extension(extensionName, options) {
-        return this.extensions[extensionName] ? new Handlebars.SafeString(this.extensions[extensionName].toString()) : '';
+    handlebars.registerHelper('eachIf', function eachIf(list, key, ...args) {
+        let value, options;
+        if (args.length > 2)
+            value = args.shift();
+        options = args.shift();
+
+        let filteredList;
+        if (value)
+            filteredList = _.filter(list, item => _.get(item, key) === value);
+        else
+            filteredList = _.filter(list, item => _.get(item, key));
+
+        let result = '';
+        for (let i = 0; i < filteredList.length; i++)
+            result = result + options.fn(filteredList[i]);
+        
+        return result;
     });
-    handlebars.registerHelper('ifExtension', function extension(extensionName, options) {
+    handlebars.registerHelper('eachUnless', function eachUnless(list, key, ...args) {
+        let value, options;
+        if (args.length > 2)
+            value = args.shift();
+        options = args.shift();
+
+        let filteredList;
+        if (value)
+            filteredList = _.filter(list, item => _.get(item, key) !== value);
+        else
+            filteredList = _.filter(list, item => !_.get(item, key));
+
+        let result = '';
+        for (let i = 0; i < filteredList.length; i++)
+            result = result + options.fn(filteredList[i]);
+        
+        return result;
+    });
+
+    handlebars.registerHelper('switch', function(value, options) {
+        this._switch_value_ = value;
+        let result = options.fn(this);
+        delete this._switch_value_;
+        delete this._switch_value_matched_;
+
+        return result;
+    });
+
+    handlebars.registerHelper('case', function(value, options) {
+        if (value == this._switch_value_) {
+            this._switch_value_matched_ = true;
+
+            return options.fn(this);
+        }
+    });
+    handlebars.registerHelper('case_default', function(options) {
+        if (!this._switch_value_matched_) {
+            return options.fn(this);
+        }
+    });
+
+    function extension(extensionName, options) {
+        return this.extensions[extensionName] ? new Handlebars.SafeString(this.extensions[extensionName].toString()) : '';
+    }
+    handlebars.registerHelper('extension', extension);
+    handlebars.registerHelper('ext', extension);
+
+    function ifExtension(extensionName, options) {
         let extensionValue = this.extensions[extensionName];
 
         if (extensionValue) {
@@ -40,7 +102,22 @@ export default function createHandlebars() {
         else {
             return options.inverse(this);
         }
-    });
+    }
+    handlebars.registerHelper('ifExtension', ifExtension);
+    handlebars.registerHelper('ifext', ifExtension);
+
+    function unlessExtension(extensionName, options) {
+        let extensionValue = this.extensions[extensionName];
+
+        if (!extensionValue) {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    }
+    handlebars.registerHelper('unlessExtension', unlessExtension);
+    handlebars.registerHelper('unlessext', unlessExtension);
 
     handlebars.registerHelper('format', function format(value, ...params) {
         params.pop();
@@ -202,6 +279,17 @@ export default function createHandlebars() {
         let ctx = params.shift() || this;
 
         if (ctx.dataType === 'future') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
+    handlebars.registerHelper('isTypeForeignModel', function isTypeForeignModel(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'foreignModel') {
             return options.fn(this);
         }
         else {
