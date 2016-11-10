@@ -274,6 +274,17 @@ export default function createHandlebars() {
             return options.inverse(this);
         }
     });
+    handlebars.registerHelper('isTypeMap', function isTypeList(...params) {
+        let options = params.pop();
+        let ctx = params.shift() || this;
+
+        if (ctx.dataType === 'map') {
+            return options.fn(this);
+        }
+        else {
+            return options.inverse(this);
+        }
+    });
     handlebars.registerHelper('isTypeFuture', function isTypeFuture(...params) {
         let options = params.pop();
         let ctx = params.shift() || this;

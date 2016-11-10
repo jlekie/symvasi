@@ -418,7 +418,14 @@ class DataType {
                     return new ListDataType(manifest, nullable, normalizedDataType.slice(5));
                 }
                 else if (_.startsWith(normalizedDataType, 'map:')) {
-                    return new MapDataType(manifest, nullable, normalizedDataType.slice(4));
+                    let facets = normalizedDataType.split(':');
+
+                    if (facets.length === 3) {
+                        return new MapDataType(manifest, nullable, facets[1], facets[2]);
+                    }
+                    else {
+                        throw new Error(`Map type format for type "${dataType}" is invalid`);
+                    }
                 }
                 else if (_.startsWith(normalizedDataType, 'future:')) {
                     return new FutureDataType(manifest, nullable, normalizedDataType.slice(7));
@@ -585,19 +592,22 @@ class ListDataType extends DataType {
     }
 }
 class MapDataType extends DataType {
-    itemType: DataType;
+    keyType: DataType;
+    valueType: DataType;
 
-    constructor(manifest: Definition, nullable: boolean, itemType: string) {
+    constructor(manifest: Definition, nullable: boolean, keyType: string, valueType: string) {
         super(manifest, nullable);
 
-        this.itemType = DataType.parseDataType(itemType, manifest);
+        this.keyType = DataType.parseDataType(keyType, manifest);
+        this.valueType = DataType.parseDataType(valueType, manifest);
     }
 
     resolveContext(): Object {
         return {
             nullable: this.nullable,
             dataType: 'map',
-            itemType: this.itemType.resolveContext()
+            keyType: this.keyType.resolveContext(),
+            valueType: this.valueType.resolveContext()
         };
     }
 }
