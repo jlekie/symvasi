@@ -40,6 +40,8 @@ export default class Definition {
     get name(): string { return priv(this).name; }
 
     resolveContext(context: any): Object {
+        let extensions = _.assign({}, this.extensions);
+
         return {
             name: this.name,
             options: this.options,
@@ -48,7 +50,8 @@ export default class Definition {
             models: this.models.map(e => e.resolveContext()),
             services: this.services.map(e => e.resolveContext()),
 
-            extensions: _.assign({}, this.extensions),
+            extensions: extensions,
+            ext: extensions,
 
             context: context
         };
@@ -70,11 +73,14 @@ class Enum {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.manifest.extensions, this.extensions);
+
         return {
             name: this.name,
             values: _.clone(this.values),
 
-            extensions: _.assign({}, this.manifest.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -93,11 +99,14 @@ class Contract {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.manifest.extensions, this.extensions);
+
         return {
             name: this.name,
             properties: this.properties.map(e => e.resolveContext()),
             
-            extensions: _.assign({}, this.manifest.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -154,6 +163,8 @@ class Model {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.manifest.extensions, this.extensions);
+
         return {
             name: this.name,
             abstract: this.abstract,
@@ -162,7 +173,8 @@ class Model {
             properties: this.properties.map(e => e.resolveContext()),
             methods: this.methods.map(e => e.resolveContext()),
             
-            extensions: _.assign({}, this.manifest.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -181,11 +193,14 @@ class Service {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.manifest.extensions, this.extensions);
+
         return {
             name: this.name,
             methods: this.methods.map(e => e.resolveContext()),
             
-            extensions: _.assign({}, this.manifest.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -213,11 +228,14 @@ class ContractProperty {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.contract.manifest.extensions, this.contract.extensions, this.extensions);
+
         return {
             name: this.name,
             type: this.type.resolveContext(),
             
-            extensions: _.assign({}, this.contract.manifest.extensions, this.contract.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -236,11 +254,14 @@ class ModelProperty {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions);
+
         return {
             name: this.name,
             type: this.type.resolveContext(),
             
-            extensions: _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -264,13 +285,16 @@ class ModelMethod {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions);
+
         return {
             name: this.name,
             static: this.isStatic,
             returnType: this.returnType ? this.returnType.resolveContext() : undefined,
             params: this.params.map(e => e.resolveContext()),
             
-            extensions: _.assign({}, this.model.manifest.extensions, this.model.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -278,18 +302,25 @@ class ModelMethodParam {
     modelMethod: ModelMethod;
     name: string;
     type: DataType;
+    extensions: Object;
 
     constructor(modelMethod: ModelMethod, props: Object) {
         this.modelMethod = modelMethod;
         
         this.name = props.name;
         this.type = DataType.parseDataType(props.type, this.modelMethod.model.manifest);
+        this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.modelMethod.model.manifest.extensions, this.modelMethod.model.extensions, this.modelMethod.extensions, this.extensions);
+
         return {
             name: this.name,
-            type: this.type.resolveContext()
+            type: this.type.resolveContext(),
+
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -311,12 +342,15 @@ class ServiceMethod {
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.service.manifest.extensions, this.service.extensions, this.extensions);
+
         return {
             name: this.name,
             returnType: this.returnType ? this.returnType.resolveContext() : undefined,
             params: this.params.map(e => e.resolveContext()),
             
-            extensions: _.assign({}, this.service.manifest.extensions, this.service.extensions, this.extensions)
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -324,18 +358,25 @@ class ServiceMethodParam {
     serviceMethod: ServiceMethod;
     name: string;
     type: DataType;
+    extensions: Object;
 
     constructor(serviceMethod: ServiceMethod, props: Object) {
         this.serviceMethod = serviceMethod;
         
         this.name = props.name;
         this.type = DataType.parseDataType(props.type, this.serviceMethod.service.manifest);
+        this.extensions = props.extensions ? _.cloneDeep(props.extensions) : {};
     }
 
     resolveContext(): Object {
+        let extensions = _.assign({}, this.serviceMethod.service.manifest.extensions, this.serviceMethod.service.extensions, this.serviceMethod.extensions, this.extensions);
+
         return {
             name: this.name,
-            type: this.type.resolveContext()
+            type: this.type.resolveContext(),
+
+            extensions: extensions,
+            ext: extensions
         };
     }
 }
@@ -376,11 +417,17 @@ class DataType {
                 else if (_.startsWith(normalizedDataType, 'list:')) {
                     return new ListDataType(manifest, nullable, normalizedDataType.slice(5));
                 }
+                else if (_.startsWith(normalizedDataType, 'map:')) {
+                    return new MapDataType(manifest, nullable, normalizedDataType.slice(4));
+                }
                 else if (_.startsWith(normalizedDataType, 'future:')) {
                     return new FutureDataType(manifest, nullable, normalizedDataType.slice(7));
                 }
                 else if (_.startsWith(normalizedDataType, 'future')) {
                     return new FutureDataType(manifest, nullable);
+                }
+                else if (_.startsWith(normalizedDataType, 'model:')) {
+                    return new ForeignModelDataType(manifest, nullable, normalizedDataType.slice(6));
                 }
                 else {
                     throw new Error(`Type "${dataType}" not supported`);
@@ -537,6 +584,23 @@ class ListDataType extends DataType {
         };
     }
 }
+class MapDataType extends DataType {
+    itemType: DataType;
+
+    constructor(manifest: Definition, nullable: boolean, itemType: string) {
+        super(manifest, nullable);
+
+        this.itemType = DataType.parseDataType(itemType, manifest);
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'map',
+            itemType: this.itemType.resolveContext()
+        };
+    }
+}
 class FutureDataType extends DataType {
     resultType: DataType;
 
@@ -552,6 +616,23 @@ class FutureDataType extends DataType {
             nullable: this.nullable,
             dataType: 'future',
             resultType: this.resultType ? this.resultType.resolveContext() : undefined
+        };
+    }
+}
+class ForeignModelDataType extends DataType {
+    modelName: string;
+
+    constructor(manifest: Definition, nullable: boolean, modelName: string) {
+        super(manifest, nullable);
+
+        this.modelName = modelName;
+    }
+
+    resolveContext(): Object {
+        return {
+            nullable: this.nullable,
+            dataType: 'foreignModel',
+            modelName: this.modelName
         };
     }
 }
