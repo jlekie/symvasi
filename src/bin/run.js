@@ -68,5 +68,6 @@ function collect(val: string, memo: Array<string>): Array<string> {
     logger.info('Done');
 })().catch((err) => {
     logger.error(err);
+    logger.error(err.stack);
     // console.error(err);
 });
